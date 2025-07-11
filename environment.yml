@@ -1,0 +1,15 @@
+# environment.yml
+name: rnaseq_env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - fastqc
+  - multiqc
+  - fastp
+  - hisat2
+  - samtools
+  - subread
+  - r-base
+  - bioconductor-deseq2

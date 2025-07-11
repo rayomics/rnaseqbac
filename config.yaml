@@ -1,0 +1,16 @@
+resource_profile: low
+threads: 4
+genome:
+  fasta_url: ""
+#https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.fna.gz
+  gtf_url: ""
+#https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.gtf.gz
+  aligner: hisat2
+paths:
+  genome_dir: genome
+  raw_dir: raw_data
+  results_dir: results
+samples:
+  condition_labels: [control, treated]
+  group_size: 3
+
