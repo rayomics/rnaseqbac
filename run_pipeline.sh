@@ -99,7 +99,7 @@ submit_or_run() {
     sbatch --job-name="$step" --cpus-per-task=$THREADS \
            --output="$LOG_DIR/${step}.log" --wrap="$cmd"
   else
-    run_logged "$step" bash -c "$cmd"
+    run_logged "$step" "$cmd"
   fi
 }
 
