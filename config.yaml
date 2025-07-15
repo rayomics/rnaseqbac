@@ -1,10 +1,8 @@
 resource_profile: low
 threads: 4
 genome:
-  fasta_url: ""
-#https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.fna.gz
-  gtf_url: ""
-#https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.gtf.gz
+  fasta_url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.fna.gz"
+  gtf_url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.gtf.gz"
   aligner: hisat2
 paths:
   genome_dir: genome
