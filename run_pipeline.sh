@@ -115,10 +115,23 @@ download_genome_data() {
     curl -L "$GTF_URL" | gunzip -c > "$GTF_FILE"
   fi
 
-  if [ ! -f "${GENOME_INDEX}.1.ht2" ]; then
-    echo "[Indexing] Building $ALIGNER index..."
-    hisat2-build -p "$THREADS" "$GENOME_FASTA" "$GENOME_INDEX"
-  fi
+  echo "[Indexing] Building $ALIGNER index..."
+  case "$ALIGNER" in
+    hisat2)
+      if [ ! -f "${GENOME_INDEX}.1.ht2" ]; then
+        hisat2-build -p "$THREADS" "$GENOME_FASTA" "$GENOME_INDEX"
+      fi
+      ;;
+    bowtie2)
+      if [ ! -f "${GENOME_INDEX}.1.bt2" ]; then
+        bowtie2-build --threads "$THREADS" "$GENOME_FASTA" "$GENOME_INDEX"
+      fi
+      ;;
+    *)
+      echo "ERROR: Unknown aligner '$ALIGNER'" >&2
+      exit 1
+      ;;
+  esac  
 }
 
 #### PIPELINE STEPS ####
@@ -154,7 +167,19 @@ align_reads() {
     sample=$(basename "$R1" _R1.trimmed.fastq.gz)
     R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
     SAM="$ALIGN_DIR/${sample}.sam"
-    hisat2 -p "$THREADS" -x "$GENOME_INDEX" -1 "$R1" -2 "$R2" -S "$SAM"
+
+    case "$ALIGNER" in
+      hisat2)
+        hisat2 -p "$THREADS" -x "$GENOME_INDEX" -1 "$R1" -2 "$R2" -S "$SAM"
+        ;;
+      bowtie2)
+        bowtie2 -p "$THREADS" -x "$GENOME_INDEX" -1 "$R1" -2 "$R2" -S "$SAM"
+        ;;
+      *)
+        echo "ERROR: Unknown aligner '$ALIGNER'" >&2
+        exit 1
+        ;;
+    esac
   done
 }
 
