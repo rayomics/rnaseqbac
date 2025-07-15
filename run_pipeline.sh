@@ -67,9 +67,8 @@ check_conda_env() {
 
   if ! conda info --envs | grep -q "$ENV_NAME"; then
     echo "[Setup] Creating Conda environment '$ENV_NAME'..."
-    conda create -y -n "$ENV_NAME" \
-      fastqc multiqc fastp "$ALIGNER" samtools subread \
-      r-base bioconductor-deseq2
+    conda env create -y --name "$ENV_NAME" \
+      -f environment.yml
   fi
 
   echo "[Setup] Activating environment '$ENV_NAME'..."
