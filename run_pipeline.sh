@@ -48,9 +48,13 @@ LOG_DIR="logs"
 # Genome files
 GENOME_FASTA="$GENOME_DIR/genome.fa"
 GTF_FILE="$GENOME_DIR/annotation.gtf"
+RRNA_LSU_FASTA="$GENOME_DIR/rrna_lsu.fa"
+RRNA_SSU_FASTA="$GENOME_DIR/rrna_ssu.fa"
 GENOME_INDEX="$GENOME_DIR/genome"
 GENOME_URL=$(read_config genome.fasta_url)
 GTF_URL=$(read_config genome.gtf_url)
+RRNA_LSU_URL=$(read_config genome.silva_db_lsu)
+RRNA_SSU_URL=$(read_config genome.silva_db_ssu)
 
 mkdir -p "$RESULTS_DIR" "$LOG_DIR" "$MERGED_DIR" "$QC_DIR" "$TRIM_DIR" "$ALIGN_DIR" "$COUNT_DIR" "$DESEQ_DIR" "$GENOME_DIR"
 
@@ -113,6 +117,16 @@ download_genome_data() {
   if [ ! -f "$GTF_FILE" ]; then
     echo "[Download] GTF annotation..."
     curl -L "$GTF_URL" | gunzip -c > "$GTF_FILE"
+  fi
+
+  if [ ! -f "$RRNA_LSU_FASTA" ]; then
+    echo "[Download] rRNA LSU data..."
+    curl -L "$RRNA_LSU_URL" | gunzip -c > "$RRNA_LSU_FASTA"
+  fi
+
+  if [ ! -f "$RRNA_SSU_FASTA" ]; then
+    echo "[Download] rRNA SSU data..."
+    curl -L "$RRNA_SSU_URL" | gunzip -c > "$RRNA_SSU_FASTA"
   fi
 
   echo "[Indexing] Building $ALIGNER index..."
