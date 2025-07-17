@@ -8,10 +8,11 @@ dependencies:
   - fastqc
   - multiqc
   - fastp
+  - bowtie2
   - hisat2
-  - sortmerna
   - samtools
   - subread
   - r-base
   - bioconductor-deseq2
   - r-tidyverse
+  - sortmerna=4.3.6
