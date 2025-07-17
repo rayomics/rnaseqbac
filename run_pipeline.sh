@@ -32,6 +32,7 @@ USE_SLURM=false
 
 # Tool settings
 ALIGNER=$(read_config genome.aligner || echo "hisat2")
+RRNA_FILTER=$(read_config genome.rrna_filter || echo "ribodetector")
 
 # Paths
 RAW_DIR=$(read_config paths.raw_dir || echo "raw_data")
@@ -178,20 +179,39 @@ trim_reads() {
 }
 
 rrna_filter() {
-  for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
-    sample=$(basename "$R1" _R1.trimmed.fastq.gz)
-    R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
-    sortmerna --reads "$R1" --reads "$R2" --ref "$RRNA_LSU_FASTA" --ref "$RRNA_SSU_FASTA" \
-    --out2 --aligned "$ALIGN_DIR/${sample}_mapped" --other "$ALIGN_DIR/${sample}_unmapped" \
-    --fastx --workdir "$ALIGN_DIR" --idx-dir "$ALIGN_DIR/idx" --threads $THREADS
-    rm -r "$ALIGN_DIR/kvdb"
-  done
+  case "$RRNA_FILTER" in
+    sortmerna)
+      for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
+        sample=$(basename "$R1" _R1.trimmed.fastq.gz)
+        R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
+        sortmerna --reads "$R1" --reads "$R2" --ref "$RRNA_FULL_FASTA" \
+        --out2 --aligned "$ALIGN_DIR/${sample}.trimmed.aligned" --other "$ALIGN_DIR/${sample}.trimmed.nonrrna" \
+        --fastx --workdir "$ALIGN_DIR" --idx-dir "$ALIGN_DIR/idx" --threads $THREADS
+        rm -r "$ALIGN_DIR/kvdb"
+      done
+      ;;
+
+    ribodetector)
+      for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
+        sample=$(basename "$R1" _R1.trimmed.fastq.gz)
+        R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
+        ribodetector_cpu -t "$THREADS" -l "$(zcat $R1 | head | awk 'NR==2 {print length($0)}')" \
+        -i "$R1" "$R2" -e none --chunk_size 256 \
+        -o "$ALIGN_DIR/${sample}.trimmed.nonrrna.1.fq.gz" "$ALIGN_DIR/${sample}.trimmed.nonrrna.2.fq.gz"            
+      done
+      
+      ;;
+    *)
+      echo "ERROR: Unknown rRNA filtering tool '$RRNA_FILTER'" >&2
+      exit 1
+      ;;
+  esac 
 }
 
 align_reads() {
-  for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
-    sample=$(basename "$R1" _R1.trimmed.fastq.gz)
-    R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
+  for R1 in "$ALIGN_DIR"/*.trimmed.nonrrna.1.fq.gz; do
+    sample=$(basename "$R1" .trimmed.nonrrna.1.fq.gz)
+    R2="$ALIGN_DIR/${sample}.trimmed.nonrrna.2.fq.gz"
     SAM="$ALIGN_DIR/${sample}.sam"
 
     case "$ALIGNER" in
