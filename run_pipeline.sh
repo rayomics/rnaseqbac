@@ -241,7 +241,7 @@ count_features() {
 }
 
 run_deseq2() {
-  Rscript scripts/run_deseq2.R "$COUNT_DIR/counts.txt" "$DESEQ_DIR"
+  Rscript scripts/run_deseq2.R "$COUNT_DIR/counts.txt" "sample_sheet.tsv" "$DESEQ_DIR"
 }
 
 #### RUN PIPELINE ####

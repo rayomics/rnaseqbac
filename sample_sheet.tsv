@@ -1,0 +1,7 @@
+file_R1	file_R2	condition
+EcoliaMG1_R1_001.fastq.gz	EcoliaMG1_R2_001.fastq.gz	control
+EcoliaMG2_R1_001.fastq.gz	EcoliaMG2_R2_001.fastq.gz	control	
+EcoliaMG3_R1_001.fastq.gz	EcoliaMG3_R2_001.fastq.gz	control
+EcoliLb1_R1_001.fastq.gz	EcoliLb1_R2_001.fastq.gz	treated
+EcoliLb2_R1_001.fastq.gz	EcoliLb2_R2_001.fastq.gz	treated
+EcoliLb3_R1_001.fastq.gz	EcoliLb3_R2_001.fastq.gz	treated
