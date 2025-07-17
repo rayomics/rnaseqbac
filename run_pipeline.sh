@@ -145,8 +145,9 @@ download_genome_data() {
       echo "ERROR: Unknown aligner '$ALIGNER'" >&2
       exit 1
       ;;
-  esac  
+  esac 
 }
+
 
 #### PIPELINE STEPS ####
 
@@ -173,6 +174,17 @@ trim_reads() {
           -o "$TRIM_DIR/${sample}_R1.trimmed.fastq.gz" \
           -O "$TRIM_DIR/${sample}_R2.trimmed.fastq.gz" \
           -w "$THREADS"
+  done
+}
+
+rrna_filter() {
+  for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
+    sample=$(basename "$R1" _R1.trimmed.fastq.gz)
+    R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
+    sortmerna --reads "$R1" --reads "$R2" --ref "$RRNA_LSU_FASTA" --ref "$RRNA_SSU_FASTA" \
+    --out2 --aligned "$ALIGN_DIR/${sample}_mapped" --other "$ALIGN_DIR/${sample}_unmapped" \
+    --fastx --workdir "$ALIGN_DIR" --idx-dir "$ALIGN_DIR/idx" --threads $THREADS
+    rm -r "$ALIGN_DIR/kvdb"
   done
 }
 
@@ -220,6 +232,7 @@ download_genome_data
 submit_or_run "merge" merge_lanes
 submit_or_run "qc" quality_control
 submit_or_run "trim" trim_reads
+submit_or_run "rrna_filter" rrna_filter
 submit_or_run "align" align_reads
 submit_or_run "count" count_features
 submit_or_run "deseq2" run_deseq2

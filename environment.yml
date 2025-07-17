@@ -9,6 +9,7 @@ dependencies:
   - multiqc
   - fastp
   - hisat2
+  - sortmerna
   - samtools
   - subread
   - r-base
