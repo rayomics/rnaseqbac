@@ -247,8 +247,8 @@ run_deseq2() {
 #### RUN PIPELINE ####
 
 check_conda_env
-download_genome_data
 
+submit_or_run "download" download_genome_data
 submit_or_run "merge" merge_lanes
 submit_or_run "qc" quality_control
 submit_or_run "trim" trim_reads
