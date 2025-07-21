@@ -63,6 +63,14 @@ mkdir -p "$RESULTS_DIR" "$LOG_DIR" "$MERGED_DIR" "$QC_DIR" "$TRIM_DIR" "$ALIGN_D
 
 ENV_NAME="rnaseq_env"
 
+## To run on HPC cluster
+
+# Install mamba
+#conda install -n base -c conda-forge mamba conda-libmamba-solver
+
+# Create env from file using mamba
+#mamba env create -f environment.yml
+
 check_conda_env() {
   echo "[Setup] Checking Conda environment..."
   if ! command -v conda &> /dev/null; then

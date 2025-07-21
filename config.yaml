@@ -1,3 +1,5 @@
+#resource_profile: high
+#threads: 8
 resource_profile: low
 threads: 4
 genome:
