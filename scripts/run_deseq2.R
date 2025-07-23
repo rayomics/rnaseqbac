@@ -12,15 +12,18 @@ suppressMessages({
 
 # Read count matrix
 counts <- read.delim(count_file, comment.char = "#", row.names = 1)
+
 # Keep only sample columns
 counts <- counts[, 6:ncol(counts)]
 
 # Extract sample names from BAM paths 
 colnames(counts) <- sub(".*\\.(.*)\\.bam$", "\\1", colnames(counts))
 
+
 # Read sample sheet
 sample_sheet <- read.table(sample_sheet_file, header = TRUE, row.names=NULL)
 sample_sheet$sample <- sub("_R[12]_.*", "", sample_sheet$file_R1)
+
 
 # Check if all samples in sample_sheet are in the counts matrix
 if (!all(sample_sheet$sample %in% colnames(counts))) {
@@ -30,15 +33,17 @@ if (!all(sample_sheet$sample %in% colnames(counts))) {
 
 # Subset and reorder counts to match sample_sheet
 counts <- counts[, sample_sheet$sample]
-head(counts)
+
 # Create coldata
 coldata <- data.frame(row.names = sample_sheet$sample,
                       condition = sample_sheet$condition)
-print(sample_sheet)
+
 # Run DESeq2
 dds <- DESeqDataSetFromMatrix(countData = counts, colData = coldata, design = ~ condition)
 dds <- DESeq(dds)
 res <- results(dds)
+vsd <- vst(dds, blind=FALSE)
+rld <- rlog(dds, blind=FALSE)
 
 # Output results
 write.csv(as.data.frame(res), file = file.path(output_dir, "deseq2_results.csv"))
@@ -70,3 +75,8 @@ volcano_plot <- ggplot(volcano_data, aes(x = log2FoldChange, y = neg_log10_padj)
 
 # Save plot
 ggsave(filename = file.path(output_dir, "volcano_plot.png"), plot = volcano_plot, width = 8, height = 6)
+
+# PCA plot
+
+PCA <- plotPCA(vsd)
+ggsave(filename = file.path(output_dir, "pca_plot.png"), plot = PCA, width = 8, height = 6)

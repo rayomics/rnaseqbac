@@ -249,7 +249,7 @@ count_features() {
     rm "$SAM"
     BAM_LIST+=("$BAM")
   done
-  featureCounts -p -T "$THREADS" -a "$GTF_FILE" -o "$COUNT_DIR/counts.txt" "${BAM_LIST[@]}"
+  featureCounts -p -t gene -T "$THREADS" -a "$GTF_FILE" -o "$COUNT_DIR/counts.txt" "${BAM_LIST[@]}"
 }
 
 run_deseq2() {
