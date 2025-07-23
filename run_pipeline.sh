@@ -162,12 +162,13 @@ download_genome_data() {
 
 merge_lanes() {
   for R1 in "$RAW_DIR"/*_R1_001.fastq.gz; do
-    sample=$(basename "$R1" | cut -d_ -f1)
+    sample=$(basename "$R1" | cut -d_ -f1-2)
     R1_out="$MERGED_DIR/${sample}_R1.fastq.gz"
     R2_out="$MERGED_DIR/${sample}_R2.fastq.gz"
-    cat "$RAW_DIR/${sample}"*_R1_001.fastq.gz > "$R1_out"
-    cat "$RAW_DIR/${sample}"*_R2_001.fastq.gz > "$R2_out"
+    cat "$RAW_DIR/${sample}"*_R1_001.fastq.gz > "$R1_out" &
+    cat "$RAW_DIR/${sample}"*_R2_001.fastq.gz > "$R2_out" &
   done
+  wait
 }
 
 quality_control() {
@@ -182,8 +183,11 @@ trim_reads() {
     fastp -i "$R1" -I "$R2" \
           -o "$TRIM_DIR/${sample}_R1.trimmed.fastq.gz" \
           -O "$TRIM_DIR/${sample}_R2.trimmed.fastq.gz" \
-          -w "$THREADS"
+          -h "$TRIM_DIR/${sample}.trimmed.html" \
+          -j "$TRIM_DIR/${sample}.trimmed.json" \
+          -w "$THREADS" &
   done
+  wait
 }
 
 rrna_filter() {
@@ -217,9 +221,9 @@ rrna_filter() {
 }
 
 align_reads() {
-  for R1 in "$ALIGN_DIR"/*.trimmed.nonrrna.1.fq.gz; do
-    sample=$(basename "$R1" .trimmed.nonrrna.1.fq.gz)
-    R2="$ALIGN_DIR/${sample}.trimmed.nonrrna.2.fq.gz"
+  for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
+    sample=$(basename "$R1" _R1.trimmed.fastq.gz)
+    R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
     SAM="$ALIGN_DIR/${sample}.sam"
 
     case "$ALIGNER" in
@@ -260,7 +264,7 @@ submit_or_run "download" download_genome_data
 submit_or_run "merge" merge_lanes
 submit_or_run "qc" quality_control
 submit_or_run "trim" trim_reads
-submit_or_run "rrna_filter" rrna_filter
+#submit_or_run "rrna_filter" rrna_filter
 submit_or_run "align" align_reads
 submit_or_run "count" count_features
 submit_or_run "deseq2" run_deseq2
