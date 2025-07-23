@@ -42,3 +42,31 @@ res <- results(dds)
 
 # Output results
 write.csv(as.data.frame(res), file = file.path(output_dir, "deseq2_results.csv"))
+
+# Create volcano plot
+volcano_data <- as.data.frame(res) %>%
+  rownames_to_column("gene") %>%
+  mutate(
+    neg_log10_padj = -log10(padj),
+    significance = case_when(
+      padj < 0.05 & abs(log2FoldChange) > 1 ~ "Significant",
+      TRUE ~ "Not Significant"
+    )
+  )
+
+# Replace Inf/-Inf with NA
+volcano_data <- volcano_data %>%
+  mutate(
+    neg_log10_padj = ifelse(is.infinite(neg_log10_padj), NA, neg_log10_padj)
+  )
+
+# Plot
+volcano_plot <- ggplot(volcano_data, aes(x = log2FoldChange, y = neg_log10_padj)) +
+  geom_point(aes(color = significance), alpha = 0.6, size = 1.5) +
+  scale_color_manual(values = c("Significant" = "red", "Not Significant" = "grey")) +
+  theme_minimal() +
+  labs(title = "Volcano Plot", x = "log2(Fold Change)", y = "-log10(padj)") +
+  theme(legend.title = element_blank())
+
+# Save plot
+ggsave(filename = file.path(output_dir, "volcano_plot.png"), plot = volcano_plot, width = 8, height = 6)
