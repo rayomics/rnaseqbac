@@ -183,8 +183,8 @@ trim_reads() {
     fastp -i "$R1" -I "$R2" \
           -o "$TRIM_DIR/${sample}_R1.trimmed.fastq.gz" \
           -O "$TRIM_DIR/${sample}_R2.trimmed.fastq.gz" \
-          -h "$TRIM_DIR/${sample}.trimmed.html" \
-          -j "$TRIM_DIR/${sample}.trimmed.json" \
+          #-h "$TRIM_DIR/${sample}.trimmed.html" \
+          #-j "$TRIM_DIR/${sample}.trimmed.json" \
           -w "$THREADS" &
   done
   wait
