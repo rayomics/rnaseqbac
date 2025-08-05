@@ -183,9 +183,12 @@ trim_reads() {
     fastp -i "$R1" -I "$R2" \
           -o "$TRIM_DIR/${sample}_R1.trimmed.fastq.gz" \
           -O "$TRIM_DIR/${sample}_R2.trimmed.fastq.gz" \
-          #-h "$TRIM_DIR/${sample}.trimmed.html" \
-          #-j "$TRIM_DIR/${sample}.trimmed.json" \
-          -w "$THREADS" &
+          --detect_adapter_for_pe \
+          --qualified_quality_phred 20 \
+          --length_required 50 \
+#          --html "$TRIM_DIR/${sample}.trimmed.html" \
+#          --json "$TRIM_DIR/${sample}.trimmed.json" \
+          --thread "$THREADS" &
   done
   wait
 }
