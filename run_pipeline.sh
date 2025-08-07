@@ -49,8 +49,8 @@ LOG_DIR="logs"
 # Genome files
 GENOME_FASTA="$GENOME_DIR/genome.fa"
 GTF_FILE="$GENOME_DIR/annotation.gtf"
-RRNA_LSU_FASTA="$GENOME_DIR/rrna_lsu.fa"
-RRNA_SSU_FASTA="$GENOME_DIR/rrna_ssu.fa"
+RRNA_LSU_FASTA=$(read_config genome.silva_db_lsu)
+RRNA_SSU_FASTA=$(read_config genome.silva_db_ssu)
 GENOME_INDEX="$GENOME_DIR/genome"
 GENOME_URL=$(read_config genome.fasta_url)
 GTF_URL=$(read_config genome.gtf_url)
@@ -107,8 +107,16 @@ submit_or_run() {
   local step="$1"
   shift
   local cmd="$*"
+
   if $USE_SLURM; then
-    sbatch --job-name="$step" --cpus-per-task=$THREADS \
+    local extra_slurm_opts=""
+    
+    # Add --threads-per-core=1 only when step is rrna_filter and command uses ribodetector
+    if [[ "$step" == "rrna_filter" && "$cmd" == *"ribodetector"* ]]; then
+      extra_slurm_opts="--threads-per-core=1"
+    fi
+
+    sbatch --job-name="$step" --cpus-per-task=$THREADS $extra_slurm_opts \
            --output="$LOG_DIR/${step}.log" --wrap="$cmd"
   else
     run_logged "$step" "$cmd"
@@ -128,15 +136,15 @@ download_genome_data() {
     curl -L "$GTF_URL" | gunzip -c > "$GTF_FILE"
   fi
 
-  if [ ! -f "$RRNA_LSU_FASTA" ]; then
-    echo "[Download] rRNA LSU data..."
-    curl -L "$RRNA_LSU_URL" | gunzip -c > "$RRNA_LSU_FASTA"
-  fi
+  #if [ ! -f "$RRNA_LSU_FASTA" ]; then
+  #  echo "[Download] rRNA LSU data..."
+  #  curl -L "$RRNA_LSU_URL" | gunzip -c > "$RRNA_LSU_FASTA"
+  #fi
 
-  if [ ! -f "$RRNA_SSU_FASTA" ]; then
-    echo "[Download] rRNA SSU data..."
-    curl -L "$RRNA_SSU_URL" | gunzip -c > "$RRNA_SSU_FASTA"
-  fi
+  #if [ ! -f "$RRNA_SSU_FASTA" ]; then
+  #  echo "[Download] rRNA SSU data..."
+  #  curl -L "$RRNA_SSU_URL" | gunzip -c > "$RRNA_SSU_FASTA"
+  #fi
 
   echo "[Indexing] Building $ALIGNER index..."
   case "$ALIGNER" in
@@ -199,10 +207,13 @@ rrna_filter() {
       for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
         sample=$(basename "$R1" _R1.trimmed.fastq.gz)
         R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
-        sortmerna --reads "$R1" --reads "$R2" --ref "$RRNA_FULL_FASTA" \
-        --out2 --aligned "$ALIGN_DIR/${sample}.trimmed.aligned" --other "$ALIGN_DIR/${sample}.trimmed.nonrrna" \
-        --fastx --workdir "$ALIGN_DIR" --idx-dir "$ALIGN_DIR/idx" --threads $THREADS
-        rm -r "$ALIGN_DIR/kvdb"
+        sortmerna --reads "$R1" --reads "$R2" --ref "$RRNA_LSU_FASTA" --ref "$RRNA_SSU_FASTA" \
+        --out2 --other "$ALIGN_DIR/${sample}.trimmed.nonrrna" \
+        --fastx --workdir "$ALIGN_DIR" --idx-dir "$(dirname "$RRNA_LSU_FASTA")/idx" --threads $THREADS --paired_in --blast 1 --num_alignments 1 -v
+        rm -rf "$ALIGN_DIR/kvdb"
+        rm -rf "$ALIGN_DIR/readb"
+        rm -rf "$ALIGN_DIR/*.sam"
+        rm -rf "$ALIGN_DIR/out"
       done
       ;;
 
@@ -211,8 +222,8 @@ rrna_filter() {
         sample=$(basename "$R1" _R1.trimmed.fastq.gz)
         R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
         ribodetector_cpu -t "$THREADS" -l "$(zcat $R1 | head | awk 'NR==2 {print length($0)}')" \
-        -i "$R1" "$R2" -e none --chunk_size 256 \
-        -o "$ALIGN_DIR/${sample}.trimmed.nonrrna.1.fq.gz" "$ALIGN_DIR/${sample}.trimmed.nonrrna.2.fq.gz"            
+        -i "$R1" "$R2" -e norrna --chunk_size 256 \
+        -o "$ALIGN_DIR/${sample}.trimmed.nonrrna_fwd.fq.gz" "$ALIGN_DIR/${sample}.trimmed.nonrrna_rev.fq.gz"            
       done
       
       ;;
@@ -224,9 +235,9 @@ rrna_filter() {
 }
 
 align_reads() {
-  for R1 in "$TRIM_DIR"/*_R1.trimmed.fastq.gz; do
-    sample=$(basename "$R1" _R1.trimmed.fastq.gz)
-    R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
+  for R1 in "$ALIGN_DIR"/*.trimmed.nonrrna_fwd.fq.gz; do
+    sample=$(basename "$R1" .trimmed.nonrrna_fwd.fq.gz)
+    R2="$ALIGN_DIR/${sample}.trimmed.nonrrna_rev.fq.gz"
     SAM="$ALIGN_DIR/${sample}.sam"
 
     case "$ALIGNER" in
@@ -267,7 +278,7 @@ submit_or_run "download" download_genome_data
 submit_or_run "merge" merge_lanes
 submit_or_run "qc" quality_control
 submit_or_run "trim" trim_reads
-#submit_or_run "rrna_filter" rrna_filter
+submit_or_run "rrna_filter" rrna_filter
 submit_or_run "align" align_reads
 submit_or_run "count" count_features
 submit_or_run "deseq2" run_deseq2

@@ -1,3 +1,5 @@
 logs/
 results/
 genome/
+rRNA_databases/idx
+rRNA_databases/scripts

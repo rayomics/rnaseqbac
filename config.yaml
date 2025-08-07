@@ -7,8 +7,8 @@ genome:
   gtf_url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.gtf.gz"
   aligner: bowtie2
   rrna_filter: ribodetector
-  silva_db_lsu: "https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/SILVA_138.2_LSURef_NR99_tax_silva.fasta.gz"
-  silva_db_ssu: "https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/SILVA_138.2_SSURef_NR99_tax_silva.fasta.gz"
+  silva_db_lsu: ./rRNA_databases/silva-bac-23s-id98.fasta
+  silva_db_ssu: ./rRNA_databases/silva-bac-16s-id90.fasta
 paths:
   genome_dir: genome
   raw_dir: raw_data
