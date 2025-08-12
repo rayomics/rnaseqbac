@@ -116,8 +116,8 @@ submit_or_run() {
       extra_slurm_opts="--threads-per-core=1"
     fi
 
-    if [[ "step" != "download" ]]; then
-      sbatch --job-name="$step" --cpus-per-task=$THREADS $extra_slurm_opts \
+    if [[ "$step" != "download" ]]; then
+      sbatch --job-name="$step" --cpus-per-task=$THREADS --ntasks=1 $extra_slurm_opts \
            --output="$LOG_DIR/${step}.log" --wait \
            --wrap="./slurm_wrapper.sh \"$step\" $cmd"
     fi 
