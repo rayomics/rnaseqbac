@@ -5,6 +5,14 @@ count_file <- args[1]
 sample_sheet_file <- args[2]
 output_dir <- args[3]
 
+# Ensure GenomeInfoDbData is installed
+if (!requireNamespace("GenomeInfoDbData", quietly = TRUE)) {
+    if (!requireNamespace("BiocManager", quietly = TRUE)) {
+        install.packages("BiocManager", repos = "https://cloud.r-project.org")
+    }
+    BiocManager::install("GenomeInfoDbData", ask = FALSE, update = FALSE)
+}
+
 suppressMessages({
   library(DESeq2)
   library(tidyverse)

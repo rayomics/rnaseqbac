@@ -108,15 +108,19 @@ submit_or_run() {
   if $USE_SLURM; then
     local extra_slurm_opts=""
 
-#    if [[ "$step" == "download" ]]; then
-#      extra_slurm_opts="--wait"
+    if [[ "$step" == "download" ]]; then
+      run_logged "$step" "$@"
+    fi
+
     if [[ "$step" == "rrna_filter" && "$cmd" == *"ribodetector"* ]]; then
       extra_slurm_opts="--threads-per-core=1"
     fi
 
-    sbatch --job-name="$step" --cpus-per-task=$THREADS $extra_slurm_opts \
+    if [[ "step" != "download" ]]; then
+      sbatch --job-name="$step" --cpus-per-task=$THREADS $extra_slurm_opts \
            --output="$LOG_DIR/${step}.log" --wait \
            --wrap="./slurm_wrapper.sh \"$step\" $cmd"
+    fi 
   else
     run_logged "$step" "$@"
   fi
