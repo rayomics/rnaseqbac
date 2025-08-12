@@ -7,14 +7,14 @@ channels:
 dependencies:
   - python=3.9
   - multiqc=1.24.1
-  - fastqc
-  - fastp
-  - bowtie2
-  - hisat2
-  - samtools
-  - subread
-  - r-base
-  - bioconductor-deseq2
-  - r-tidyverse
+  - fastqc=0.12.1
+  - fastp=1.0.1
+  - bowtie2=2.5.4
+  - hisat2=2.2.1
+  - samtools=1.22.1
+  - subread=2.1.1
+  - r-base=4.4.2
+  - bioconductor-deseq2=1.46.0
+  - r-tidyverse=2.0.0
   - sortmerna=4.3.6
-  - ribodetector
+  - ribodetector=0.3.1

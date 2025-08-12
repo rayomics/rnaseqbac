@@ -61,6 +61,8 @@ mkdir -p "$RESULTS_DIR" "$LOG_DIR" "$MERGED_DIR" "$QC_DIR" "$TRIM_DIR" "$ALIGN_D
 ENV_NAME="rnaseq_env"
 
 source "$(dirname "$0")/pipeline_functions.sh"
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate $ENV_NAME
 
 step="$1"
 shift

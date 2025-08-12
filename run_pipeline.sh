@@ -63,32 +63,42 @@ mkdir -p "$RESULTS_DIR" "$LOG_DIR" "$MERGED_DIR" "$QC_DIR" "$TRIM_DIR" "$ALIGN_D
 
 ENV_NAME="rnaseq_env"
 
-## To run on HPC cluster
+#check_conda_env() {
+#  echo "[Setup] Checking Conda environment..."
+#  if ! command -v conda &> /dev/null; then
+#    echo "❌ Conda not found. Please install Miniconda or Anaconda first."
+#    exit 1
+#  fi
 
-# Install mamba
-#conda install -n base -c conda-forge mamba conda-libmamba-solver
+#  if ! conda info --envs | grep -q "$ENV_NAME"; then
+#    echo "[Setup] Creating Conda environment '$ENV_NAME'..."
+#    conda env create -y --name "$ENV_NAME" \
+#      -f environment.yml
+#  fi
 
-# Create env from file using mamba
-#mamba env create -f environment.yml
+#  echo "[Setup] Activating environment '$ENV_NAME'..."
+#  source "$(conda info --base)/etc/profile.d/conda.sh"
+#  conda activate "$ENV_NAME"
+#  export PATH="$CONDA_PREFIX/bin:$PATH"
+#} 
 
-check_conda_env() {
-  echo "[Setup] Checking Conda environment..."
-  if ! command -v conda &> /dev/null; then
-    echo "❌ Conda not found. Please install Miniconda or Anaconda first."
+check_mamba_env() {
+  echo "[Setup] Checking Mamba environment..."
+  if ! command -v mamba &> /dev/null; then
+    echo "❌ Mamba not found. Please install it !"
     exit 1
   fi
 
   if ! conda info --envs | grep -q "$ENV_NAME"; then
-    echo "[Setup] Creating Conda environment '$ENV_NAME'..."
-    conda env create -y --name "$ENV_NAME" \
-      -f environment.yml
+    echo "[Setup] Creating Mamba environment '$ENV_NAME'..."
+    mamba env create -y --name "$ENV_NAME" -f environment.yml
   fi
 
   echo "[Setup] Activating environment '$ENV_NAME'..."
   source "$(conda info --base)/etc/profile.d/conda.sh"
   conda activate "$ENV_NAME"
+  export PATH="$CONDA_PREFIX/bin:$PATH"
 }
-
 
 submit_or_run() {
   local step="$1"
@@ -113,9 +123,10 @@ submit_or_run() {
 }
 
 source "$(dirname "$0")/pipeline_functions.sh"
+
 #### RUN PIPELINE ####
 
-check_conda_env
+check_mamba_env
 
 submit_or_run "download" download_genome_data
 submit_or_run "merge" merge_lanes
