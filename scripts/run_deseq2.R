@@ -30,8 +30,8 @@ colnames(counts) <- sub(".*\\.(.*)\\.bam$", "\\1", colnames(counts))
 
 # Read sample sheet
 sample_sheet <- read.table(sample_sheet_file, header = TRUE, row.names=NULL)
-sample_sheet$sample <- sub("_R[12]_.*", "", sample_sheet$file_R1)
-
+#sample_sheet$sample <- sub("_R[12]_.*", "", sample_sheet$file_R1)
+sample_sheet$sample <- sub("_R1.*", "", sample_sheet$file_R1)
 
 # Check if all samples in sample_sheet are in the counts matrix
 if (!all(sample_sheet$sample %in% colnames(counts))) {

@@ -88,14 +88,17 @@ trim_reads() {
     sample=$(basename "$R1" _R1.fastq.gz)
     R2="$MERGED_DIR/${sample}_R2.fastq.gz"
     fastp -i "$R1" -I "$R2" \
-          -o "$TRIM_DIR/${sample}_R1.trimmed.fastq.gz" \
-          -O "$TRIM_DIR/${sample}_R2.trimmed.fastq.gz" \
-          --detect_adapter_for_pe \
-          --qualified_quality_phred 20 \
-          --length_required 50 \
-#          --html "$TRIM_DIR/${sample}.trimmed.html" \
-#          --json "$TRIM_DIR/${sample}.trimmed.json" \
-          --thread "$THREADS" &
+      -o "$TRIM_DIR/${sample}_R1.trimmed.fastq.gz" \
+      -O "$TRIM_DIR/${sample}_R2.trimmed.fastq.gz" \
+      --detect_adapter_for_pe \
+      --disable_adapter_trimming \
+      --disable_trim_poly_g \
+      --disable_quality_filtering \
+      --disable_length_filtering \
+      --qualified_quality_phred 20 \
+      --unqualified_percent_limit 0 \
+      --length_required 75 \
+      --thread "$THREADS" &
   done
   wait
 }
@@ -108,12 +111,18 @@ rrna_filter() {
         R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
         sortmerna --reads "$R1" --reads "$R2" --ref "$RRNA_LSU_FASTA" --ref "$RRNA_SSU_FASTA" \
         --out2 --other "$ALIGN_DIR/${sample}.trimmed.nonrrna" \
-        --fastx --workdir "$ALIGN_DIR" --idx-dir "$(dirname "$RRNA_LSU_FASTA")/idx" --threads $THREADS --paired_in --blast 1 --num_alignments 1 -v
-        rm -rf "$ALIGN_DIR/kvdb"
-        rm -rf "$ALIGN_DIR/readb"
+        --fastx --workdir "$ALIGN_DIR/$sample" --idx-dir "$(dirname "$RRNA_LSU_FASTA")/idx" --threads 16 --paired_in --num_alignments 1 -v
+#       (( count++ ))
+#        echo "$count"
+#        if (( count % MAX_JOBS == 0 )); then
+#          wait
+#        fi
+        rm -rf "$ALIGN_DIR/$sample/kvdb"
+        rm -rf "$ALIGN_DIR/$sample/readb"
         rm -rf "$ALIGN_DIR/*.sam"
-        rm -rf "$ALIGN_DIR/out"
+        rm -rf "$ALIGN_DIR/$sample/out"
       done
+      #wait
       ;;
 
     ribodetector)
@@ -121,20 +130,20 @@ rrna_filter() {
         sample=$(basename "$R1" _R1.trimmed.fastq.gz)
         R2="$TRIM_DIR/${sample}_R2.trimmed.fastq.gz"
         chunk_opt=""
-        if ! $USE_SLURM; then
-          chunk_opt="--chunk_size 256"
+        if ! $USE_SLURM ; then
+          chunk_opt="--chunk_size 5000"
         fi
         ribodetector_cpu -t "$THREADS" -l "$(zcat $R1 | head | awk 'NR==2 {print length($0)}')" \
         -i "$R1" "$R2" -e norrna $chunk_opt \
-        -o "$ALIGN_DIR/${sample}.trimmed.nonrrna_fwd.fq.gz" "$ALIGN_DIR/${sample}.trimmed.nonrrna_rev.fq.gz"            
+        -o "$ALIGN_DIR/${sample}.trimmed.nonrrna_fwd.fq.gz" "$ALIGN_DIR/${sample}.trimmed.nonrrna_rev.fq.gz"
       done
-      
+
       ;;
     *)
       echo "ERROR: Unknown rRNA filtering tool '$RRNA_FILTER'" >&2
       exit 1
       ;;
-  esac 
+  esac
 }
 
 align_reads() {
@@ -156,17 +165,20 @@ align_reads() {
         ;;
     esac
   done
-}
-
-count_features() {
-  BAM_LIST=()
   for SAM in "$ALIGN_DIR"/*.sam; do
     BAM="${SAM%.sam}.bam"
     samtools view -@ "$THREADS" -Sb "$SAM" | samtools sort -@ "$THREADS" -o "$BAM"
     rm "$SAM"
+  done
+}
+
+count_features() {
+  BAM_LIST=()
+  for SAM in "$ALIGN_DIR"/*.bam; do
+    BAM="${SAM%.sam}"
     BAM_LIST+=("$BAM")
   done
-  featureCounts -p -t gene -T "$THREADS" -a "$GTF_FILE" -o "$COUNT_DIR/counts.txt" "${BAM_LIST[@]}"
+  featureCounts -p -B -C -t CDS -s 2 -g "$GENE_IDENTIFIER" -T "$THREADS" -a "$GTF_FILE" -o "$COUNT_DIR/counts.txt" "${BAM_LIST[@]}"
 }
 
 run_deseq2() {

@@ -56,6 +56,7 @@ GENOME_URL=$(read_config genome.fasta_url)
 GTF_URL=$(read_config genome.gtf_url)
 RRNA_LSU_URL=$(read_config genome.silva_db_lsu)
 RRNA_SSU_URL=$(read_config genome.silva_db_ssu)
+GENE_IDENTIFIER=$(read_config genome.gtf_gene_entry)
 
 mkdir -p "$RESULTS_DIR" "$LOG_DIR" "$MERGED_DIR" "$QC_DIR" "$TRIM_DIR" "$ALIGN_DIR" "$COUNT_DIR" "$DESEQ_DIR" "$GENOME_DIR"
 
